@@ -1,0 +1,282 @@
+---
+output: html_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## *Deeksha*
+
+## **s4665507**
+ 
+-----------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------
+# Assignment 2
+
+-----------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------
+### Topic:Data Wrangling and Visualization
+
+install.packages("widyr")
+install.packages("randomForest")
+```{r}
+library(tidyverse)
+library(knitr)
+library(skimr)
+library(modeldata)
+#Importing the dataset
+
+thanksgiving <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-11-20/thanksgiving_meals.csv")
+```
+
+### Task 1
+### Display the first 10 rows of the dataset using `kable()` function.
+
+
+```{r}
+kable(thanksgiving[1:10,])
+```
+----------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------
+### Task 2
+### Using `skim()` display the summary of variables.
+
+```{r}
+skim(thanksgiving)
+```
+
+### 2.1 Task to predict a family income based on their menu: what variables may be useful? Are all of them correct type? 
+
+In this scenario, where outputs are known already(here output is family income)we can use supervised learning.
+Therefore,Using skim function we know that family income is a character variable but it is dependent on other menu items which are independent variables.Here family income is dependent on menu items so it acts as a response variable and other menu items will act as predictor variables.But to predict output all of these  char variables must be of factor type.Hence,char type variables need to be converted into factor type.
+In this task, family income is based on variables-**side1,side7, pie3,pie8,dessert5** The families ordering these mentioned items would be having higher incomes comparative to other families because these items are expensive w.r.t. other items in menu.
+
+---------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------
+
+### 2.2 Task to predict a community type or US_region based on their menu: what variables may be useful? Are all of them correct type?
+
+Similarly, output variables here need to be converted from char type to factor.To predict a community type or us_region based on their menu, we will use these variables-**dessert,pie**, since different regions are having specific favorite dessert items so we can predict the region on this basis.
+
+
+---------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------
+### Task 3
+###  Use `fct_reorder` and `parse_number` functions to create a factor variable `family_income`
+
+```{r}
+library(forcats)
+changed_data <-thanksgiving %>%
+   mutate(family_income= fct_reorder(family_income, parse_number(family_income)))
+
+#With the help of skim function we are able to see that 'family_income' has been converted into factor variable.
+  skim(changed_data)
+  
+```
+
+---------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------
+### Task 4
+### What is the number of people who celebrate?
+
+```{r}
+#To find the no. of people who celebrate, we need to filter the variable celebrate's value when it is equal to "Yes".
+
+thanksgiving %>%
+  filter(celebrate == "Yes")
+
+```
+#### As shown in output,we can conclude out of 1058 people, there are **980 people** who celebrate.
+
+---------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------
+
+### Task 5
+### What are categories and insights for each main dish served and the method it is prepared?
+
+
+```{r}
+#to display the categories-
+thanksgiving%>%
+  count(main_dish, main_prep)
+
+#Insight-
+ggplot(thanksgiving, aes(main_dish, main_prep))+ 
+  geom_point(color="orange")+
+  labs(title="Insight",x="Main Dish served",y="Main Preparation method")+
+  coord_flip()
+ 
+```
+
+------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
+
+
+### Task 6
+### Create 3 different data viz showing insights for main dish served and the method. Provide your own legend and use themes.
+
+
+#### In First viz,I have used geom_count() that clearly shows the main dish served with the method of its preparation either roasted,baked or whatsoever by pointing with blue dots in the graph.
+```{r}
+#Both the variables are discrete in nature so we can use following insights to visualize them.
+#First Visualization-
+thanksgiving%>%
+ggplot(aes(  main_dish, main_prep))+
+geom_count(color="blue",size=3)+
+labs(title="First Visualization")+
+coord_flip()+
+theme_light()
+```
+
+
+
+#### In Second viz,geom_jitter is used for graphical representation by depicting small red empty squares where the two variables coincide, but it is not showing any clear visualization.
+
+```{r}
+#Second Visualization
+thanksgiving%>%
+ggplot(aes(  main_dish, main_prep))+
+geom_jitter(height=2, width=2.5,color="red",shape=0)+
+scale_y_discrete()+
+labs(title="Second Visualization")+
+coord_flip()
+```
+
+
+#### In Third viz, again geom_count() is used as it shows much better view and can be understood easily.The yellow dots in this dark theme visualization marks the method of preparation of the dish written on left hand side.
+```{r}
+#Third Visualization
+thanksgiving%>%
+ggplot(aes(  main_dish, main_prep))+
+geom_count(color="yellow",size=1)+
+labs(title="Third Visualization")+
+coord_flip()+
+theme_dark()
+```
+
+------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
+
+
+### Task 7
+### How many use cranberry sauce? How many use gravy?
+
+
+```{r}
+thanksgiving %>%
+  filter(cranberry=="Homemade"|cranberry== "Canned")%>%
+  select(id,cranberry)
+```
+  
+#### Hence, there are **803** people who eat cranberry sauce either homemade or canned.
+
+
+```{r}
+thanksgiving %>%
+  filter( gravy =="Yes")%>%
+  select(id,gravy)
+
+```
+
+#### So, it is clear that **892** people order gravy.
+
+---------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------
+### Task 8-9. What is the distribution of those who celebrate across income ranges. Create a data viz.
+
+```{r}
+thanksgiving %>%
+  count(family_income,celebrate="Yes")
+#It means we have 12 different income ranges and different no. of people celebrate in each income range.
+ggplot(thanksgiving,aes(family_income))+
+  geom_bar(color="green")+
+  labs(title="Count of people celebrating across different income ranges", x="Family Income Range", y="No. of people who celebrate",)+
+  theme_gray()+
+  coord_flip()
+
+```
+
+#### From this visualization, we can conclude the no. of people celebrating across different income ranges.For example,in income range $125,000-149,999 nearby 50 people celebrate and so on.Also, highest and lowest no. of people celebrating thanksgiving can be found.
+Highest count- Range $25,000 to $49,999
+
+lowest count - Range $175,000 to $199,999
+
+-------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------
+
+### Task 10
+### Use the following code to create a new data set.
+```{r}
+new_data <- thanksgiving %>%
+select(id, starts_with("side"),
+         starts_with("pie"),
+         starts_with("dessert")) %>%
+  select(-side15, -pie13, -dessert12) %>%
+  gather(type, value, -id) %>%
+  filter(!is.na(value),
+         !value %in% c("None", "Other (please specify)")) %>%
+  mutate(type = str_remove(type, "\\d+"))
+
+```
+#### Explanation:
+with the help of above written code, a new dataset with 8145 obs. of 3 variables, has been created out of the original dataset(thanksgiving) .Firstly, a selection is made for  column-id and columns starting with side, pie and dessert, out of which columns-side15,pie13 and dessert12 have been removed.Afterthat gather fxn. is used to collect the variables-type,value, id that specifies either the type is-side,pie or dessert and what is its value?for example-in case of side- value indicates either it is brussel sprouts or carrot and so on.Finally, all the null values such as -NA ,NOne, others are filtered out using ! sign within filter fxn. and lastly, a new variable called type is mutated into this new_data.
+
+--------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
+### Task 11-12
+### Install package `widyr` and use `pairwise_cor()` function.
+
+#### pairwise_cor() function:
+This function is used to find correlation of items in pairs,within a column based upon a 'feature' column that determines the relationship between these paired items.It determines the link between paired items in a tabular form.
+
+```{r}
+library(widyr)
+new_data%>%
+  pairwise_cor(value, id, sort = TRUE)
+
+```
+#### Conclusion:
+From the output, it can be seen that different items are paired together under columns item 1 and item 2 and third column is specifying their correlation in decibal form.
+
+--------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
+### Task 13
+### Use `lm()` or randomForest() function to build a model that predict a family income based on data in the dataset. 
+
+```{r}
+library(randomForest)
+
+#Classification Model 1(In this model, I am predicting families who celebrate thanksgiving with gravy to be having average incomes as gravy is quite affordable.)
+
+rf1 <- randomForest( family_income ~ celebrate + gravy, data = changed_data, na.action = na.omit)
+print(rf1) 
+
+
+
+#Classification Model 2 (Aim of this model is to predict families having somewhat higher income than average ,those who order cranberry and travel on this day.)
+
+rf2 <- randomForest( family_income ~ cranberry + travel ,data = changed_data, na.action = na.omit)
+print(rf2)
+
+
+#Classification Model 3 (In this model, we will predict relatively lower income families by giving the least expensive items as input variables which are- prayer and watch_program.)   
+
+rf3 <- randomForest( family_income ~ prayer + watch_program ,data = changed_data, na.action = na.omit)
+print(rf3)
+
+
+```
+
+#### Since, out of these three models, MOdel 3 is having least OOB estimate of error rate i.e. 82.4% in comparison to other two models.So, I would consider it as best model for this scenario.
+
+
+
+
+
+
+
+
+
+
